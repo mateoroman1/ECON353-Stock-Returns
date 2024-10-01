@@ -1,6 +1,5 @@
 import streamlit as st
 from requests import get
-import csv
 import io
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
@@ -14,14 +13,14 @@ av_key = st.secrets['ALPHAVANTAGE_KEY']
 alp_key = st.secrets['ALPACA_KEY']
 alp_secret = st.secrets['ALPACA_SECRET']
 
-def get_alpaca_data(ticker: str):
+def get_alpaca_data(ticker: str, start_d: datetime, end_d: datetime):
     client = StockHistoricalDataClient(alp_key, alp_secret)
 
     request_params = StockBarsRequest(
         symbol_or_symbols=ticker, 
         timeframe=TimeFrame.Month, 
-        start=datetime(2019, 9, 1), 
-        end=datetime(2024, 9, 1),
+        start=start_d, 
+        end=end_d,
         adjustment='split'
         )
 
@@ -30,10 +29,12 @@ def get_alpaca_data(ticker: str):
 
 # Streamlit App
 st.title('Stock Data Downloader for ECON353')
-st.markdown("#### **Retrieves Monthly Stock return data for the Stocktrack Portfolio assignment.**\n\n*Enter a stock ticker and hit the button below. You can then save the xlsx file.  Data is currently only from 2024-09-01 to 2019-09-01 and includes all OHLC data. Be sure to only include the :green[close] column in the assignment spreadsheet*")
+st.markdown("#### **Retrieves Monthly Stock return data for the Stocktrack Portfolio assignment.**\n\n*Enter a stock ticker and hit the button below. You can then save the xlsx file.  Data includes all OHLC data. Be sure to only include the :green[close] column in the assignment spreadsheet*")
 
 # Create input form
 ticker = st.text_input('Enter Stock Ticker (e.g. AAPL, MSFT):', '')
+start_date = st.date_input("From:", datetime(2019, 9, 1))
+end_date = st.date_input("To:", datetime(2024, 9, 1))
 
 @st.cache_data
 def cache_alpaca_df(df):
@@ -48,7 +49,7 @@ def cache_alpaca_df(df):
 # When user submits
 if st.button('Retrieve Stock Data'):
     if ticker:
-        alpaca_data = cache_alpaca_df(get_alpaca_data(ticker))
+        alpaca_data = cache_alpaca_df(get_alpaca_data(ticker, start_date, end_date))
 
         # Add download button
         st.download_button(
